@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>John Chambard — Software Engineer</title>
+<meta name="description" content="John Chambard — software engineer studying CS at Purdue. Compilers, embedded hardware, shipped products, and autonomous AI systems." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --dial:#0a0e13;
+    --dial-raised:#11171f;
+    --dial-edge:#1b232d;
+    --steel:#8593a1;
+    --steel-dim:#5b6772;
+    --printed:#e9e7df;
+    --lume:#4fe6c2;
+    --lume-deep:#1f6f5e;
+    --lume-glow:rgba(79,230,194,.55);
+    --orange:#ff6b35;
+    --rail-w:72px;
+    --maxw:1080px;
+    --pad:clamp(20px,5vw,64px);
+    --display:'Space Grotesk',system-ui,sans-serif;
+    --body:'Inter',system-ui,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--dial);
+    color:var(--printed);
+    font-family:var(--body);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(900px 600px at 78% -8%, rgba(79,230,194,.06), transparent 60%),
+      radial-gradient(700px 500px at 0% 100%, rgba(255,107,53,.035), transparent 55%);
+  }
+  a{color:inherit;text-decoration:none}
+  img{max-width:100%;display:block}
+
+  ::selection{background:var(--lume);color:#04140f}
+
+  /* ---------- focus ---------- */
+  a:focus-visible,button:focus-visible{
+    outline:2px solid var(--lume);outline-offset:3px;border-radius:2px;
+  }
+
+  /* ---------- shared label / type ---------- */
+  .eyebrow{
+    font-family:var(--mono);font-size:11px;letter-spacing:.32em;
+    text-transform:uppercase;color:var(--lume);
+  }
+  .mono{font-family:var(--mono)}
+  .dim{color:var(--steel)}
+
+  /* ---------- bezel rail (signature) ---------- */
+  .rail{
+    position:fixed;left:0;top:0;bottom:0;width:var(--rail-w);z-index:40;
+    border-right:1px solid var(--dial-edge);
+    background:linear-gradient(180deg,rgba(10,14,19,.6),rgba(10,14,19,0));
+    display:flex;flex-direction:column;align-items:center;
+  }
+  .rail-spine{
+    position:absolute;left:50%;top:24px;bottom:24px;width:1px;
+    transform:translateX(-50%);
+    background:linear-gradient(180deg,transparent,var(--dial-edge) 8%,var(--dial-edge) 92%,transparent);
+  }
+  .rail-ticks{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}
+  .rail-tick{
+    position:absolute;left:50%;height:1px;background:var(--steel-dim);
+    transform:translateX(-50%);width:8px;opacity:.5;
+  }
+  .rail-tick.maj{width:16px;opacity:.85;background:var(--steel)}
+  /* lume progress hand */
+  .rail-hand{
+    position:absolute;left:50%;width:22px;height:2px;transform:translateX(-50%);
+    background:var(--orange);top:24px;
+    box-shadow:0 0 10px rgba(255,107,53,.8);
+    transition:top .08s linear;z-index:3;
+  }
+  .rail-hand::after{
+    content:"";position:absolute;right:-3px;top:-2px;width:6px;height:6px;
+    border-radius:50%;background:var(--orange);box-shadow:0 0 8px rgba(255,107,53,.9);
+  }
+  .rail-nav{position:absolute;left:0;top:0;width:100%;height:100%}
+  .rail-node{
+    position:absolute;left:50%;transform:translate(-50%,-50%);
+    display:flex;align-items:center;gap:0;cursor:pointer;z-index:4;
+  }
+  .rail-node .dot{
+    width:9px;height:9px;border-radius:50%;
+    border:1px solid var(--steel-dim);background:var(--dial);
+    transition:.25s;flex:none;
+  }
+  .rail-node .lbl{
+    position:absolute;left:18px;font-family:var(--mono);font-size:9.5px;
+    letter-spacing:.18em;text-transform:uppercase;color:var(--steel-dim);
+    white-space:nowrap;opacity:0;transform:translateX(-4px);transition:.25s;
+  }
+  .rail-node:hover .lbl{opacity:1;transform:none;color:var(--steel)}
+  .rail-node[aria-current="true"] .dot{
+    border-color:var(--lume);background:var(--lume);
+    box-shadow:0 0 10px var(--lume-glow),0 0 22px var(--lume-glow);
+  }
+  .rail-node[aria-current="true"] .lbl{opacity:1;color:var(--lume)}
+  .rail-crown{
+    position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+    width:14px;height:26px;border-radius:3px;
+    background:repeating-linear-gradient(90deg,var(--dial-edge) 0 1.5px,var(--dial-raised) 1.5px 3px);
+    border:1px solid var(--dial-edge);
+  }
+  .rail-mark{
+    position:absolute;top:18px;left:50%;transform:translateX(-50%);
+    font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--steel-dim);
+  }
+
+  /* ---------- mobile top progress ---------- */
+  .topbar{display:none}
+
+  /* ---------- layout shell ---------- */
+  .shell{position:relative;z-index:1;padding-left:var(--rail-w)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding-inline:var(--pad)}
+  section{padding-block:clamp(72px,11vh,128px)}
+  .sec-head{display:flex;align-items:baseline;gap:18px;margin-bottom:42px;flex-wrap:wrap}
+  .sec-head .idx{font-family:var(--mono);font-size:12px;color:var(--lume);letter-spacing:.2em}
+  .sec-head h2{
+    font-family:var(--display);font-weight:600;font-size:clamp(24px,3.4vw,38px);
+    letter-spacing:-.01em;line-height:1.05;
+  }
+  .sec-head .note{margin-left:auto;max-width:300px;font-size:13px;color:var(--steel)}
+
+  /* divider with bezel tick scale */
+  .tickline{
+    height:14px;width:100%;
+    background-image:repeating-linear-gradient(90deg,var(--dial-edge) 0 1px,transparent 1px 11px);
+    background-position:bottom;background-repeat:repeat-x;background-size:auto 7px;
+    opacity:.5;
+  }
+
+  /* ---------- hero ---------- */
+  .hero{min-height:100vh;display:flex;align-items:center;position:relative}
+  .hero .wrap{width:100%}
+  .hero-grid{display:grid;grid-template-columns:1.5fr .85fr;gap:48px;align-items:center}
+  .status{
+    display:inline-flex;align-items:center;gap:9px;
+    font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--printed);border:1px solid var(--dial-edge);border-radius:999px;
+    padding:7px 14px;background:var(--dial-raised);margin-bottom:26px;
+  }
+  .status .pulse{
+    width:8px;height:8px;border-radius:50%;background:var(--lume);
+    box-shadow:0 0 0 0 var(--lume-glow);animation:pulse 2.4s ease-out infinite;
+  }
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 var(--lume-glow)}
+    70%{box-shadow:0 0 0 9px rgba(79,230,194,0)}
+    100%{box-shadow:0 0 0 0 rgba(79,230,194,0)}
+  }
+  .hero h1{
+    font-family:var(--display);font-weight:700;letter-spacing:-.03em;line-height:.95;
+    font-size:clamp(46px,8.5vw,92px);margin-bottom:20px;
+  }
+  .hero h1 .lume{color:var(--lume);text-shadow:0 0 26px var(--lume-glow)}
+  .hero .tag{font-size:clamp(16px,2vw,20px);color:var(--printed);max-width:50ch;margin-bottom:14px;font-weight:500}
+  .hero .sub{font-size:15px;color:var(--steel);max-width:54ch;margin-bottom:34px}
+  .cta-row{display:flex;flex-wrap:wrap;gap:12px}
+  .btn{
+    font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+    padding:13px 20px;border-radius:6px;border:1px solid var(--dial-edge);
+    background:var(--dial-raised);color:var(--printed);transition:.2s;cursor:pointer;
+    display:inline-flex;align-items:center;gap:9px;
+  }
+  .btn:hover{border-color:var(--lume);color:var(--lume);box-shadow:0 0 18px rgba(79,230,194,.15)}
+  .btn.primary{background:var(--lume);color:#04140f;border-color:var(--lume);font-weight:600}
+  .btn.primary:hover{box-shadow:0 0 26px var(--lume-glow);color:#04140f}
+  .btn svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.6}
+
+  /* hero movement subdial */
+  .movement{
+    position:relative;aspect-ratio:1;width:min(290px,80%);margin-inline:auto;
+    border-radius:50%;
+    background:
+      radial-gradient(circle at 50% 38%, rgba(79,230,194,.07), transparent 55%),
+      conic-gradient(from 0deg, rgba(255,255,255,.02), rgba(255,255,255,0) 30%, rgba(255,255,255,.02) 60%, rgba(255,255,255,0)),
+      var(--dial-raised);
+    border:1px solid var(--dial-edge);
+    box-shadow:inset 0 0 40px rgba(0,0,0,.6), 0 18px 50px rgba(0,0,0,.5);
+    display:grid;place-items:center;
+  }
+  .movement .ring{position:absolute;inset:14px;border-radius:50%;border:1px solid rgba(133,147,161,.14)}
+  .movement svg{width:100%;height:100%;position:absolute;inset:0}
+  .movement .center{
+    text-align:center;z-index:2;
+  }
+  .movement .center .cal{font-family:var(--mono);font-size:10px;letter-spacing:.34em;color:var(--steel);text-transform:uppercase}
+  .movement .center .auto{font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.06em;margin-top:4px}
+  .movement .center .small{font-family:var(--mono);font-size:9px;color:var(--steel-dim);letter-spacing:.2em;margin-top:7px}
+
+  /* ---------- subregisters / stats ---------- */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+  .reg{
+    border:1px solid var(--dial-edge);border-radius:12px;background:var(--dial-raised);
+    padding:24px 20px 22px;position:relative;overflow:hidden;
+  }
+  .reg::before{
+    content:"";position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;
+    border:1px solid rgba(133,147,161,.12);
+  }
+  .reg .v{font-family:var(--display);font-weight:700;font-size:clamp(30px,4vw,42px);line-height:1;letter-spacing:-.02em}
+  .reg .v em{font-style:normal;color:var(--lume)}
+  .reg .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--steel);margin-top:12px}
+
+  /* ---------- profile ---------- */
+  .profile-grid{display:grid;grid-template-columns:1.3fr .7fr;gap:48px;align-items:start}
+  .profile p{font-size:clamp(16px,1.6vw,18px);color:var(--printed);margin-bottom:18px;max-width:62ch}
+  .profile p.dim{color:var(--steel)}
+  .spec-card{
+    border:1px solid var(--dial-edge);border-radius:12px;background:var(--dial-raised);
+    padding:6px 0;
+  }
+  .spec-row{display:flex;justify-content:space-between;gap:16px;padding:13px 20px;border-bottom:1px solid var(--dial-edge);font-size:13px}
+  .spec-row:last-child{border-bottom:0}
+  .spec-row .label{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--steel)}
+  .spec-row .val{text-align:right;color:var(--printed)}
+
+  /* ---------- experience ---------- */
+  .xp{display:flex;flex-direction:column;gap:0}
+  .xp-item{
+    display:grid;grid-template-columns:200px 1fr;gap:32px;
+    padding:30px 0;border-top:1px solid var(--dial-edge);position:relative;
+  }
+  .xp-item:first-child{border-top:0}
+  .xp-when{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--steel)}
+  .xp-when .now{color:var(--lume)}
+  .xp-role{font-family:var(--display);font-weight:600;font-size:20px;margin-bottom:3px}
+  .xp-co{font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:var(--orange);text-transform:uppercase;margin-bottom:14px}
+  .xp-list{list-style:none;display:flex;flex-direction:column;gap:10px}
+  .xp-list li{position:relative;padding-left:20px;font-size:14.5px;color:var(--printed)}
+  .xp-list li::before{
+    content:"";position:absolute;left:0;top:9px;width:7px;height:1px;background:var(--lume);
+  }
+  .xp-list li b{color:var(--lume);font-weight:600}
+
+  /* ---------- projects / complications ---------- */
+  .grid-work{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+  .card{
+    border:1px solid var(--dial-edge);border-radius:14px;background:var(--dial-raised);
+    padding:26px 26px 24px;position:relative;transition:.25s;overflow:hidden;
+    display:flex;flex-direction:column;
+  }
+  .card.feat{grid-column:1 / -1}
+  .card::after{
+    content:"";position:absolute;inset:0;border-radius:14px;pointer-events:none;
+    box-shadow:inset 0 0 0 1px transparent;transition:.25s;
+  }
+  .card:hover{transform:translateY(-3px);border-color:var(--lume-deep)}
+  .card:hover::after{box-shadow:inset 0 0 30px rgba(79,230,194,.08)}
+  .card .top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:8px}
+  .card h3{font-family:var(--display);font-weight:600;font-size:22px;letter-spacing:-.01em}
+  .card .ref{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--steel-dim);white-space:nowrap;margin-top:6px}
+  .card .role{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--orange);text-transform:uppercase;margin-bottom:14px}
+  .card .desc{font-size:14.5px;color:var(--printed);margin-bottom:18px}
+  .card.feat .desc{max-width:64ch}
+  .metrics{display:flex;flex-wrap:wrap;gap:22px;margin-bottom:18px}
+  .metrics .m .mv{font-family:var(--display);font-weight:700;font-size:22px;color:var(--lume);line-height:1}
+  .metrics .m .mk{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--steel);margin-top:5px}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:auto}
+  .chip{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--steel);
+    border:1px solid var(--dial-edge);border-radius:5px;padding:5px 9px;background:var(--dial);
+  }
+  .card .links{display:flex;gap:16px;margin-top:18px}
+  .card .links a{
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--lume);
+    display:inline-flex;align-items:center;gap:7px;transition:.2s;
+  }
+  .card .links a:hover{gap:11px}
+  .card .links a svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.6}
+
+  /* ---------- skills ---------- */
+  .skills-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+  .skblock{border:1px solid var(--dial-edge);border-radius:12px;background:var(--dial-raised);padding:22px 24px}
+  .skblock h4{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--lume);margin-bottom:16px}
+  .skblock .row{display:flex;flex-wrap:wrap;gap:8px}
+
+  /* ---------- contact ---------- */
+  .contact-inner{
+    border:1px solid var(--dial-edge);border-radius:18px;background:var(--dial-raised);
+    padding:clamp(34px,5vw,56px);text-align:center;position:relative;overflow:hidden;
+  }
+  .contact-inner::before{
+    content:"";position:absolute;left:50%;top:-40%;width:60%;aspect-ratio:1;transform:translateX(-50%);
+    background:radial-gradient(circle,rgba(79,230,194,.1),transparent 70%);pointer-events:none;
+  }
+  .contact-inner h2{font-family:var(--display);font-weight:700;font-size:clamp(28px,4.5vw,46px);letter-spacing:-.02em;margin-bottom:14px;position:relative}
+  .contact-inner p{color:var(--steel);max-width:46ch;margin:0 auto 30px;position:relative}
+  .contact-links{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;position:relative}
+
+  footer{
+    border-top:1px solid var(--dial-edge);padding:26px var(--pad);
+    display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--steel-dim);
+  }
+  footer .caseback{display:flex;align-items:center;gap:10px}
+  footer .caseback .o{width:6px;height:6px;border-radius:50%;background:var(--lume);box-shadow:0 0 8px var(--lume-glow)}
+
+  /* reveal */
+  .reveal{opacity:0;transform:translateY(18px);transition:opacity .7s ease, transform .7s cubic-bezier(.2,.7,.2,1)}
+  .reveal.in{opacity:1;transform:none}
+
+  /* ---------- responsive ---------- */
+  @media (max-width:960px){
+    .hero-grid{grid-template-columns:1fr;gap:36px}
+    .movement{order:-1;width:min(220px,60%)}
+    .profile-grid{grid-template-columns:1fr;gap:32px}
+    .stats{grid-template-columns:repeat(2,1fr)}
+  }
+  @media (max-width:760px){
+    :root{--rail-w:0px}
+    .rail{display:none}
+    .shell{padding-left:0}
+    .topbar{
+      display:flex;position:fixed;top:0;left:0;right:0;height:3px;z-index:50;background:var(--dial-edge);
+    }
+    .topbar .fill{height:100%;width:0;background:var(--orange);box-shadow:0 0 10px rgba(255,107,53,.8)}
+    .grid-work{grid-template-columns:1fr}
+    .xp-item{grid-template-columns:1fr;gap:12px}
+    .skills-grid{grid-template-columns:1fr}
+    .sec-head .note{margin-left:0}
+  }
+  @media (max-width:420px){
+    .stats{grid-template-columns:1fr 1fr}
+    .reg .v{font-size:30px}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+    .reveal{opacity:1;transform:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- mobile progress -->
+<div class="topbar" aria-hidden="true"><div class="fill" id="topfill"></div></div>
+
+<!-- signature bezel rail -->
+<nav class="rail" aria-label="Section navigation">
+  <span class="rail-mark">0</span>
+  <div class="rail-spine"></div>
+  <div class="rail-ticks" id="railTicks" aria-hidden="true"></div>
+  <div class="rail-hand" id="railHand" aria-hidden="true"></div>
+  <div class="rail-nav" id="railNav"></div>
+  <div class="rail-crown" aria-hidden="true"></div>
+</nav>
+
+<div class="shell">
+
+  <!-- HERO -->
+  <header class="hero" id="home">
+    <div class="wrap">
+      <div class="hero-grid">
+        <div>
+          <span class="status"><span class="pulse"></span>Open to SWE / AI / Cloud internships</span>
+          <h1>John<br>Cham<span class="lume">bard</span></h1>
+          <p class="tag">Software engineer building things with real moving parts — compilers, embedded hardware, shipped products, and autonomous AI.</p>
+          <p class="sub">CS at Purdue (B.S. 2028). Currently engineering full-stack internal tooling and an operations AI agent at Phillips 66. I like systems precise enough to hold up in production.</p>
+          <div class="cta-row">
+            <a class="btn primary" href="#work">
+              <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              View work
+            </a>
+            <a class="btn" href="resume.pdf" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/></svg>
+              Résumé
+            </a>
+            <a class="btn" href="https://github.com/jchambard" target="_blank" rel="noopener">GitHub</a>
+            <a class="btn" href="https://www.linkedin.com/in/john-chambard/" target="_blank" rel="noopener">LinkedIn</a>
+          </div>
+        </div>
+
+        <!-- live movement subdial -->
+        <div class="movement" role="img" aria-label="Live seconds subdial">
+          <div class="ring"></div>
+          <svg viewBox="0 0 200 200" id="movementSvg">
+            <g id="secTicks" stroke="#3a4650" stroke-width="1"></g>
+            <line id="secHand" x1="100" y1="100" x2="100" y2="26" stroke="var(--orange)" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="100" cy="100" r="4.5" fill="var(--orange)"/>
+            <circle cx="100" cy="100" r="2" fill="#0a0e13"/>
+          </svg>
+          <div class="center">
+            <div class="cal">Cal. JC&middot;2028</div>
+            <div class="auto">AUTOMATIC</div>
+            <div class="small">ALWAYS SHIPPING</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap"><div class="tickline"></div></div>
+
+  <!-- PROFILE -->
+  <section id="profile">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="idx">01</span>
+        <h2>Profile</h2>
+      </div>
+      <div class="profile-grid">
+        <div class="profile reveal">
+          <p>I'm a CS student at Purdue who likes building things end to end — from the first rough idea to something people actually use. A lot of that has been with the same small team since high school, including <b>Bear&nbsp;Den</b>, a campus app that a few thousand students ended up relying on day to day.</p>
+          <p class="dim">These days I'm interning at <b style="color:var(--printed)">Phillips&nbsp;66</b>, working on internal tooling and an AI agent for refinery operations. Before that I spent a year at NETSYNC on AWS infrastructure for university cybersecurity labs.</p>
+          <p class="dim">I'm drawn to systems with a lot of moving parts — compilers, embedded hardware, payment rails, local AI — and I care most about getting the small details right so the thing actually holds up.</p>
+        </div>
+        <div class="spec-card reveal" aria-label="Spec sheet">
+          <div class="spec-row"><span class="label">Study</span><span class="val">Purdue CS · B.S. 2028</span></div>
+          <div class="spec-row"><span class="label">Focus</span><span class="val">Software Eng. + Cybersecurity</span></div>
+          <div class="spec-row"><span class="label">Now</span><span class="val">SWE Intern, Phillips 66</span></div>
+          <div class="spec-row"><span class="label">Lead</span><span class="val">Purdue STACK</span></div>
+          <div class="spec-row"><span class="label">Base</span><span class="val">Houston, TX</span></div>
+          <div class="spec-row"><span class="label">Off-clock</span><span class="val">Volleyball · gym · watches</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXPERIENCE -->
+  <section id="experience">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="idx">02</span>
+        <h2>Experience</h2>
+        <p class="note">Where the engineering has run in production.</p>
+      </div>
+      <div class="xp">
+        <div class="xp-item reveal">
+          <div class="xp-when"><span class="now">May 2026 — Now</span></div>
+          <div>
+            <div class="xp-role">Software Engineer Intern</div>
+            <div class="xp-co">Phillips 66</div>
+            <ul class="xp-list">
+              <li>Building a full-stack invoicing / SAP admin tool serving <b>25,000+ customers</b> and <b>$2M+</b> in daily transactions.</li>
+              <li>Refactoring tech debt across 4 repos and migrating 3 on-prem tools to cloud, improving offsite refinery response times.</li>
+              <li>Developing an internal AI agent that parses refinery documents into weekly digests for leadership.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="xp-item reveal">
+          <div class="xp-when">May 2025 — Jan 2026</div>
+          <div>
+            <div class="xp-role">Software Engineer Intern</div>
+            <div class="xp-co">NETSYNC</div>
+            <ul class="xp-list">
+              <li>Architected EC2 cloud infrastructure for VM provisioning, cutting cyber-lab setup from days to <b>under 3 hours</b> for 12+ universities via Lambda automation.</li>
+              <li>Led app development adopted by <b>87+ clients</b> to manage AWS migrations, averaging $12K in cloud cost reductions.</li>
+              <li>Worked in a 20-person international Agile Scrum team shipping to Fortune 500 and government clients.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="xp-item reveal">
+          <div class="xp-when">Jan 2026 — Now</div>
+          <div>
+            <div class="xp-role">Project Manager <span class="dim mono" style="font-size:12px">· Leadership</span></div>
+            <div class="xp-co">STACK — Purdue Software Engineering Club</div>
+            <ul class="xp-list">
+              <li>Lead a 6-person team across 8 sprints with <b>40+ PRs merged</b>, delivering a peer-matching platform for a nonprofit client.</li>
+              <li>Promoted after one semester from a pool of 50 developers; drive sprint planning, code reviews, and architecture.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORK / COMPLICATIONS -->
+  <section id="work">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="idx">03</span>
+        <h2>Complications</h2>
+        <p class="note">Selected projects — the harder mechanisms.</p>
+      </div>
+      <div class="grid-work">
+
+        <!-- Bear Den (feature) -->
+        <article class="card feat reveal">
+          <div class="top">
+            <div>
+              <h3>The Bear Den</h3>
+              <div class="role">Mobile campus platform · 2023—2025</div>
+            </div>
+            <span class="ref">REF. 01 · SHIPPED</span>
+          </div>
+          <p class="desc">A production app reaching 6,000+ students across 10+ schools in six months, at a 4.9-star rating. I designed a Golang REST API for sensitive student data and an A* routing engine that maps the fastest path across a real building.</p>
+          <div class="metrics">
+            <div class="m"><div class="mv">6,000+</div><div class="mk">Users / 6 mo</div></div>
+            <div class="m"><div class="mv">3,000/day</div><div class="mk">API requests &lt;100ms</div></div>
+            <div class="m"><div class="mv">4 floors</div><div class="mk">A* over 100+ nodes</div></div>
+            <div class="m"><div class="mv">4.9★</div><div class="mk">App Store rating</div></div>
+          </div>
+          <div class="chips">
+            <span class="chip">React Native</span><span class="chip">TypeScript</span><span class="chip">Golang</span><span class="chip">Firebase</span><span class="chip">REST</span>
+          </div>
+          <div class="links">
+            <a href="https://github.com/Atmosphere-Devs-Organization/BHS_App" target="_blank" rel="noopener">App repo
+              <svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></svg></a>
+            <a href="https://github.com/jchambard/BearDen_HAC_API" target="_blank" rel="noopener">Backend API
+              <svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></svg></a>
+          </div>
+        </article>
+
+        <!-- HearLink -->
+        <article class="card reveal">
+          <div class="top">
+            <div>
+              <h3>HearLink</h3>
+              <div class="role">Sound-detection wearable · 2026</div>
+            </div>
+            <span class="ref">REF. 02</span>
+          </div>
+          <p class="desc">A real-time embedded pipeline on an ESP32-S3 reading four microphones over dual I2S buses, with delay-and-sum beamforming and on-device YAMNet inference. Custom PCBs with PWM-tuned haptics — built in 30 hours. Judges invited me to write up the beamforming work.</p>
+          <div class="metrics">
+            <div class="m"><div class="mv">550ms</div><div class="mk">End-to-end latency</div></div>
+            <div class="m"><div class="mv">70%</div><div class="mk">over 521 classes</div></div>
+            <div class="m"><div class="mv">±7°</div><div class="mk">Direction accuracy</div></div>
+          </div>
+          <div class="chips">
+            <span class="chip">C/C++</span><span class="chip">Python</span><span class="chip">ESP32-S3</span><span class="chip">YAMNet</span><span class="chip">PCB Design</span>
+          </div>
+        </article>
+
+        <!-- JackScript -->
+        <article class="card reveal">
+          <div class="top">
+            <div>
+              <h3>JackScript</h3>
+              <div class="role">Programming language · 2024—2025</div>
+            </div>
+            <span class="ref">REF. 03</span>
+          </div>
+          <p class="desc">A complete language from scratch — lexer, parser, AST, interpreter, and runtime — supporting 6+ data types and 20+ built-ins, parsing at 10,000+ tokens/second. Adopted by a UIL competitive-programming team and used across 20+ programs.</p>
+          <div class="metrics">
+            <div class="m"><div class="mv">10K/s</div><div class="mk">Tokens parsed</div></div>
+            <div class="m"><div class="mv">20+</div><div class="mk">Built-in functions</div></div>
+          </div>
+          <div class="chips">
+            <span class="chip">Java</span><span class="chip">Compiler Design</span><span class="chip">Interpreter</span>
+          </div>
+          <div class="links">
+            <a href="https://github.com/jchambard/JackScript" target="_blank" rel="noopener">Source
+              <svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></svg></a>
+          </div>
+        </article>
+
+        <!-- Tutelum -->
+        <article class="card reveal">
+          <div class="top">
+            <div>
+              <h3>Tutelum</h3>
+              <div class="role">Agentic payment governance · 2026</div>
+            </div>
+            <span class="ref">REF. 04</span>
+          </div>
+          <p class="desc">A startup MVP letting an autonomous AI agent execute and track payments on-chain via the x402 protocol and Coinbase CDP SDK — with a policy layer governing spend (per-transaction and daily limits, whitelist / blacklist), exposed as tools over an MCP server.</p>
+          <div class="chips">
+            <span class="chip">x402</span><span class="chip">CDP SDK</span><span class="chip">MCP</span><span class="chip">TypeScript</span><span class="chip">Ollama</span>
+          </div>
+        </article>
+
+        <!-- Agentic OS -->
+        <article class="card reveal">
+          <div class="top">
+            <div>
+              <h3>Agentic OS</h3>
+              <div class="role">Self-hosted local AI · 2026—Now</div>
+            </div>
+            <span class="ref">REF. 05</span>
+          </div>
+          <p class="desc">A fully local AI system on a custom dual-boot Linux/Windows build — CUDA toolchain configured from scratch for GPU-accelerated inference. A RAG pipeline over 12,000+ personal documents and a nightly scheduler cut daily planning from 16 minutes to 90 seconds, running entirely on Ollama.</p>
+          <div class="metrics">
+            <div class="m"><div class="mv">12,000+</div><div class="mk">Docs indexed</div></div>
+            <div class="m"><div class="mv">16m→90s</div><div class="mk">Planning time</div></div>
+          </div>
+          <div class="chips">
+            <span class="chip">pgvector</span><span class="chip">Redis</span><span class="chip">Ollama</span><span class="chip">CUDA</span><span class="chip">Linux</span>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- SKILLS / MOVEMENT SPEC -->
+  <section id="skills">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="idx">04</span>
+        <h2>Movement spec</h2>
+        <p class="note">The toolset under the dial.</p>
+      </div>
+      <div class="skills-grid">
+        <div class="skblock reveal">
+          <h4>Languages</h4>
+          <div class="row">
+            <span class="chip">C</span><span class="chip">C++</span><span class="chip">Java</span><span class="chip">Python</span><span class="chip">TypeScript</span><span class="chip">JavaScript</span><span class="chip">Golang</span><span class="chip">Rust</span><span class="chip">OCaml</span><span class="chip">SQL</span><span class="chip">MASM</span>
+          </div>
+        </div>
+        <div class="skblock reveal">
+          <h4>Frameworks</h4>
+          <div class="row">
+            <span class="chip">React</span><span class="chip">React Native</span><span class="chip">Node.js</span><span class="chip">FastAPI</span><span class="chip">Flask</span><span class="chip">Expo</span><span class="chip">TensorFlow</span><span class="chip">PyTorch</span><span class="chip">scikit-learn</span>
+          </div>
+        </div>
+        <div class="skblock reveal">
+          <h4>Cloud &amp; Tools</h4>
+          <div class="row">
+            <span class="chip">AWS</span><span class="chip">Lambda</span><span class="chip">EC2 / S3</span><span class="chip">Docker</span><span class="chip">Git</span><span class="chip">Linux</span><span class="chip">CUDA</span><span class="chip">Firebase</span><span class="chip">Supabase</span><span class="chip">Jira</span>
+          </div>
+        </div>
+        <div class="skblock reveal">
+          <h4>Systems &amp; AI</h4>
+          <div class="row">
+            <span class="chip">Compilers</span><span class="chip">Embedded / ESP32</span><span class="chip">RAG</span><span class="chip">MCP</span><span class="chip">Ollama</span><span class="chip">pgvector</span><span class="chip">REST APIs</span><span class="chip">x402</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="wrap">
+      <div class="contact-inner reveal">
+        <span class="eyebrow">05 — Set the time</span>
+        <h2 style="margin-top:14px">Let's build something.</h2>
+        <p>Open to internships and collaborative projects in software, AI, and cloud. The fastest way to reach me is email.</p>
+        <div class="contact-links">
+          <a class="btn primary" href="mailto:johnchambard07@gmail.com">
+            <svg viewBox="0 0 24 24"><path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/></svg>
+            johnchambard07@gmail.com
+          </a>
+          <a class="btn" href="https://github.com/jchambard" target="_blank" rel="noopener">GitHub</a>
+          <a class="btn" href="https://www.linkedin.com/in/john-chambard/" target="_blank" rel="noopener">LinkedIn</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="caseback"><span class="o"></span>John Chambard · Purdue CS · 2026</div>
+    <div>No template movements inside</div>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var sections = Array.prototype.slice.call(document.querySelectorAll('section[id], header[id]'));
+
+  /* ---- live seconds subdial ---- */
+  (function(){
+    var g = document.getElementById('secTicks');
+    if(g){
+      for(var i=0;i<60;i++){
+        var a=(i/60)*2*Math.PI;
+        var rOut=92, rIn=(i%5===0)?82:87;
+        var x1=100+rOut*Math.sin(a), y1=100-rOut*Math.cos(a);
+        var x2=100+rIn*Math.sin(a),  y2=100-rIn*Math.cos(a);
+        var ln=document.createElementNS('http://www.w3.org/2000/svg','line');
+        ln.setAttribute('x1',x1.toFixed(1));ln.setAttribute('y1',y1.toFixed(1));
+        ln.setAttribute('x2',x2.toFixed(1));ln.setAttribute('y2',y2.toFixed(1));
+        if(i%5===0){ln.setAttribute('stroke','#566069');ln.setAttribute('stroke-width','1.4');}
+        g.appendChild(ln);
+      }
+    }
+    var hand=document.getElementById('secHand');
+    function tick(){
+      var now=new Date();
+      var s=now.getSeconds()+now.getMilliseconds()/1000;
+      var deg=(s/60)*360;
+      if(hand) hand.setAttribute('transform','rotate('+deg+' 100 100)');
+      if(!reduce) requestAnimationFrame(tick);
+    }
+    if(reduce){ // step once
+      var now=new Date(); var deg=(now.getSeconds()/60)*360;
+      if(hand) hand.setAttribute('transform','rotate('+deg+' 100 100)');
+    } else { requestAnimationFrame(tick); }
+  })();
+
+  /* ---- bezel rail: ticks + nav nodes + scroll hand ---- */
+  var railTicks=document.getElementById('railTicks');
+  var railNav=document.getElementById('railNav');
+  var railHand=document.getElementById('railHand');
+  var topfill=document.getElementById('topfill');
+  var nodes=[];
+  var labels={home:'Top',stats:'Numbers',profile:'Profile',experience:'Experience',work:'Work',skills:'Skills',contact:'Contact'};
+
+  function buildTicks(){
+    if(!railTicks) return;
+    railTicks.innerHTML='';
+    var H=railTicks.clientHeight, N=40;
+    for(var i=0;i<=N;i++){
+      var t=document.createElement('div');
+      t.className='rail-tick'+(i%5===0?' maj':'');
+      t.style.top=(24 + (i/N)*(H-48))+'px';
+      railTicks.appendChild(t);
+    }
+  }
+  function buildNav(){
+    if(!railNav) return;
+    railNav.innerHTML='';nodes=[];
+    var max=Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+    var H=railNav.clientHeight, top=24, span=H-48;
+    sections.forEach(function(sec){
+      var p=Math.min(1, sec.offsetTop/max);
+      var node=document.createElement('a');
+      node.className='rail-node';
+      node.href='#'+sec.id;
+      node.style.top=(top+p*span)+'px';
+      node.setAttribute('aria-label',labels[sec.id]||sec.id);
+      node.innerHTML='<span class="dot"></span><span class="lbl">'+(labels[sec.id]||sec.id)+'</span>';
+      railNav.appendChild(node);
+      nodes.push({el:node,sec:sec});
+    });
+  }
+  function onScroll(){
+    var max=Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+    var p=Math.min(1, Math.max(0, window.scrollY/max));
+    if(railHand){
+      var H=railNav.clientHeight, top=24, span=H-48;
+      railHand.style.top=(top+p*span)+'px';
+    }
+    if(topfill) topfill.style.width=(p*100)+'%';
+    // active section
+    var cur=sections[0];
+    var mid=window.scrollY+window.innerHeight*0.35;
+    sections.forEach(function(s){ if(s.offsetTop<=mid) cur=s; });
+    nodes.forEach(function(n){
+      n.el.setAttribute('aria-current', n.sec===cur ? 'true':'false');
+    });
+  }
+  function rebuild(){ buildTicks(); buildNav(); onScroll(); }
+
+  window.addEventListener('scroll', onScroll, {passive:true});
+  window.addEventListener('resize', function(){ clearTimeout(window.__rt); window.__rt=setTimeout(rebuild,150); });
+  window.addEventListener('load', rebuild);
+  rebuild();
+
+  /* ---- reveal on scroll ---- */
+  if(!reduce && 'IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+    },{threshold:0.12, rootMargin:'0px 0px -8% 0px'});
+    document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+  } else {
+    document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('in'); });
+  }
+})();
+</script>
+</body>
+</html>
